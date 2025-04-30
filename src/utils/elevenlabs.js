@@ -1,37 +1,31 @@
 // Import ElevenLabs API key from config
 const { elevenLabsApiKey } = require('../config');
+const { ElevenLabsClient } = require("elevenlabs");
 
 /**
  * Generates voice audio from text using ElevenLabs API
  * @param {string} text - The text to convert to speech
+ * @param {string} voiceId - The ID of the voice to use
  * @returns {Promise<Buffer>} - Audio buffer containing the generated voice
  */
-async function generateVoice(text) {
-    // Make API request to ElevenLabs text-to-speech endpoint
-    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00TcvDq8ikWAM', {
-        method: 'POST',
-        headers: {
-            'Accept': 'audio/mpeg',          // Request audio in MPEG format
-            'Content-Type': 'application/json',
-            'xi-api-key': elevenLabsApiKey   // API authentication
-        },
-        body: JSON.stringify({
-            text: text,                      // Text to convert
-            model_id: "eleven_monolingual_v1", // Voice model to use
-            voice_settings: {
-                stability: 0.5,              // Voice stability (0-1)
-                similarity_boost: 0.5        // Voice similarity boost (0-1)
-            }
-        })
-    });
-
-    // Check if the API request was successful
-    if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.statusText}`);
+async function generateVoice(text, voiceId = "JBFqnCBsd6RMkjVDRZzb") {
+    const client = new ElevenLabsClient({ apiKey: elevenLabsApiKey, xiApiKey: elevenLabsApiKey });
+    if (!client) {
+        throw new Error("ElevenLabs client not initialized");
     }
 
-    // Convert the audio response to a Buffer
-    return Buffer.from(await response.arrayBuffer());
+    const response = await client.textToSpeech.convert(voiceId, {
+        output_format: "mp3_44100_128",
+        text: text,
+        model_id: "eleven_multilingual_v2"
+    });
+
+    if (!response) {
+        throw new Error("ElevenLabs API error");
+    }
+
+    // The response is already a Buffer, so we can return it directly
+    return response;
 }
 
 // Export the generateVoice function

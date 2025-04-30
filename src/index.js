@@ -1,11 +1,11 @@
 // Import required Discord.js modules and configuration
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Intents } = require('discord.js');
 const { token } = require('./config');
 const fs = require('node:fs');
 const path = require('node:path');
 
 // Create a new Discord client with required intents
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
 
 // Create a collection to store commands
 client.commands = new Collection();
@@ -44,14 +44,14 @@ client.on('interactionCreate', async interaction => {
 
     try {
         // Execute the command
-        await command.execute(interaction);
+        await command.execute(interaction, client);
     } catch (error) {
         // Log error and notify user if something goes wrong
         console.error(error);
-        await interaction.reply({ 
-            content: 'There was an error while executing this command!', 
-            ephemeral: true 
-        });
+        // await interaction.reply({ 
+        //     content: 'There was an error while executing this command!', 
+        //     ephemeral: true 
+        // });
     }
 });
 

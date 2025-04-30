@@ -4,15 +4,19 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "deploy": "node deploy-commands.js"
   },
   "author": "Boris Semanco",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@discordjs/voice": "^0.18.0",
     "discord.js": "^14.19.2",
     "dotenv": "^16.5.0",
+    "elevenlabs": "^1.57.0",
+    "libsodium-wrappers": "^0.7.15",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.10"
   }
