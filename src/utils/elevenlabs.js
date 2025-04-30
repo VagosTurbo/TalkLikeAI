@@ -17,8 +17,8 @@ async function generateVoice(text, voiceId = "JBFqnCBsd6RMkjVDRZzb") {
     const response = await client.textToSpeech.convert(voiceId, {
         output_format: "mp3_44100_128",
         text: text,
-        // model_id: "eleven_multilingual_v2",  // more expensive, but better quality
-        model_id: "eleven_flash_v2_5"
+        model_id: "eleven_multilingual_v2",  // more expensive, but better quality
+        // model_id: "eleven_flash_v2_5"
     });
 
     if (!response) {

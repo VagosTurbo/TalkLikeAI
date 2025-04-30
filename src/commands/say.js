@@ -7,8 +7,8 @@ const { generateVoice } = require('../utils/elevenlabs');
 const VOICES = {
     'Robert Fico': 'YcndghbEfQRyTRbIwocp',
     'Rytmus': 'QmXCknqEIMbLRX3tAWjP',
-    'Bella': 'EXAVITQu4vr4xnSDxMaL',
-    'Antoni': 'ErXwobaYiN019PkySvjV',
+    'Separ': 'XtTOMAyVffiwI9YtkkMn',
+    'Rachellka': 'XAouT5swI4e8WafLH21y',
     'Elli': 'MF3mGyEYCl7XYWbV9V6O',
     'Josh': 'TxGEqnHWrfWFTfGW9XjX',
     'Arnold': 'VR6AewLTigWG4xSOukaG',
