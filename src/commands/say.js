@@ -5,8 +5,8 @@ const { generateVoice } = require('../utils/elevenlabs');
 
 // Define available voices
 const VOICES = {
-    'Rachel': '21m00Tcm4TlvDq8ikWAM',
-    'Domi': 'AZnzlk1XvdvUeBnXmlld',
+    'Robert Fico': 'YcndghbEfQRyTRbIwocp',
+    'Rytmus': 'QmXCknqEIMbLRX3tAWjP',
     'Bella': 'EXAVITQu4vr4xnSDxMaL',
     'Antoni': 'ErXwobaYiN019PkySvjV',
     'Elli': 'MF3mGyEYCl7XYWbV9V6O',
