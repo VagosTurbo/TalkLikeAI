@@ -9,8 +9,8 @@ const VOICES = {
     'Rytmus': 'QmXCknqEIMbLRX3tAWjP',
     'Separ': 'XtTOMAyVffiwI9YtkkMn',
     'Rachellka': 'XAouT5swI4e8WafLH21y',
-    'Elli': 'MF3mGyEYCl7XYWbV9V6O',
-    'Josh': 'TxGEqnHWrfWFTfGW9XjX',
+    'Restt': 'J5rs348snnmGLpVkaTDx',
+    'Boborovský': 'uLtwmHA6LXFyWCuOGK20',
     'Arnold': 'VR6AewLTigWG4xSOukaG',
     'Adam': 'pNInz6obpgDQGcFmaJgB',
     'Sam': 'yoZ06aMxZJJ28mfd3POQ',
@@ -27,6 +27,107 @@ const VOICES = {
     'Arthur': 'jsCqWAovK2LkecY7zXl4',
     'Kyle': 'KqV3BtmUUnh4v8V6SXHr'
 };
+
+// Queue system
+const queue = new Map();
+
+// Function to process the queue
+async function processQueue(guildId) {
+    const serverQueue = queue.get(guildId);
+    if (!serverQueue || serverQueue.playing) return;
+
+    if (serverQueue.voiceRecords.length === 0) {
+        // Only disconnect when queue is empty
+        if (serverQueue.connection) {
+            serverQueue.connection.destroy();
+            serverQueue.connection = null;
+        }
+        queue.delete(guildId);
+        return;
+    }
+
+    serverQueue.playing = true;
+    const voiceRecord = serverQueue.voiceRecords[0];
+
+    try {
+        const player = createAudioPlayer();
+        const audioBuffer = await generateVoice(voiceRecord.text, VOICES[voiceRecord.voiceName]);
+        const resource = createAudioResource(audioBuffer);
+        
+        player.on(AudioPlayerStatus.Playing, () => {
+            console.log(`Playing: ${voiceRecord.text} using ${voiceRecord.voiceName} voice`);
+        });
+
+        player.on('error', error => {
+            console.error('Audio player error:', error);
+            voiceRecord.interaction.editReply('There was an error playing the audio.');
+            processNext(guildId);
+        });
+
+        player.on(AudioPlayerStatus.Idle, () => {
+            processNext(guildId);
+        });
+
+        player.play(resource);
+        serverQueue.player = player;
+        
+        // Only join voice channel if not already connected
+        if (!serverQueue.connection) {
+            const connection = joinVoiceChannel({
+                channelId: voiceRecord.voiceChannel.id,
+                guildId: voiceRecord.guildId,
+                adapterCreator: voiceRecord.voiceChannel.guild.voiceAdapterCreator,
+            });
+
+            if (!connection) {
+                voiceRecord.interaction.editReply('Failed to connect to the voice channel.');
+                processNext(guildId);
+                return;
+            }
+
+            serverQueue.connection = connection;
+        }
+
+        // Subscribe the connection to the audio player
+        const subscription = serverQueue.connection.subscribe(player);
+        serverQueue.subscription = subscription;
+
+    } catch (error) {
+        console.error('Error processing queue:', error);
+        voiceRecord.interaction.editReply('There was an error processing your request.');
+        processNext(guildId);
+    }
+}
+
+// Function to process next song in queue
+function processNext(guildId) {
+    const serverQueue = queue.get(guildId);
+    if (!serverQueue) return;
+
+    // Clean up current player and subscription
+    if (serverQueue.subscription) {
+        serverQueue.subscription.unsubscribe();
+    }
+    if (serverQueue.player) {
+        serverQueue.player.stop();
+    }
+
+    // Remove the current song
+    serverQueue.voiceRecords.shift();
+    serverQueue.playing = false;
+
+    // Process next song if available
+    if (serverQueue.voiceRecords.length > 0) {
+        processQueue(guildId);
+    } else {
+        // Only disconnect when queue is empty
+        if (serverQueue.connection) {
+            serverQueue.connection.destroy();
+            serverQueue.connection = null;
+        }
+        queue.delete(guildId);
+    }
+}
 
 // Export the command module
 module.exports = {
@@ -51,64 +152,85 @@ module.exports = {
 
     // Command execution handler
     async execute(interaction, client) {
-        // Get the text input from the user
-        const text = interaction.options.getString('text');
-        const voiceName = interaction.options.getString('voice') || 'George'; // Default to George if no voice selected
-        
-        const voiceChannelId = interaction.member.voice.channelId;
-        const voiceChannel = client.channels.cache.get(voiceChannelId);
-
-        if (!voiceChannel) {
-            return interaction.reply({ content: 'You need to be in a voice channel to use this command!', ephemeral: true });
-        }
-        
         try {
+            // Check if the user is in a voice channel
+            if (!interaction.member?.voice?.channelId) {
+                return interaction.reply({ 
+                    content: 'You need to be in a voice channel to use this command!', 
+                    ephemeral: true 
+                });
+            }
+
+            // Get the voice channel
+            const voiceChannel = interaction.member.voice.channel;
+            if (!voiceChannel) {
+                return interaction.reply({ 
+                    content: 'Could not find your voice channel. Please try again.', 
+                    ephemeral: true 
+                });
+            }
+
+            // Check if the bot has permission to join and speak in the channel
+            const permissions = voiceChannel.permissionsFor(interaction.guild.members.me);
+            if (!permissions.has('Connect') || !permissions.has('Speak')) {
+                return interaction.reply({ 
+                    content: 'I need permission to join and speak in your voice channel!', 
+                    ephemeral: true 
+                });
+            }
+
+            // Get the text input from the user
+            const text = interaction.options.getString('text');
+            const voiceName = interaction.options.getString('voice') || 'George'; // Default to George if no voice selected
+
             // Defer the reply as voice generation might take some time
             await interaction.deferReply();
 
-            const player = createAudioPlayer();
-
-            player.on(AudioPlayerStatus.Playing, () => {
-                console.log('The audio player has started playing!');
-            });
-
-            player.on('error', error => {
-                return interaction.editReply('There was an error generating the voice.');
-            });
-
-            // Generate voice using ElevenLabs API with selected voice
-            const audioBuffer = await generateVoice(text, VOICES[voiceName]);
-
-            // Create and play audio
-            const resource = createAudioResource(audioBuffer);
-            player.play(resource);
-            
-            // Join the voice channel
-            const connection = joinVoiceChannel({
-                channelId: voiceChannelId,
-                guildId: interaction.guild.id,
-                adapterCreator: interaction.guild.voiceAdapterCreator,
-            });
-
-            if (!connection) {
-                return interaction.editReply('Failed to connect to the voice channel.');
+            // Create or get the server queue
+            if (!queue.has(interaction.guild.id)) {
+                queue.set(interaction.guild.id, {
+                    voiceRecords: [],
+                    playing: false,
+                    player: null,
+                    connection: null,
+                    subscription: null
+                });
             }
 
-            // Subscribe the connection to the audio player
-            const subscription = connection.subscribe(player);
+            const serverQueue = queue.get(interaction.guild.id);
 
-            // Stopped playing audio
-            player.on(AudioPlayerStatus.Idle, () => {
-                // Clean up
-                connection.destroy();
-                subscription.unsubscribe();
-                return interaction.editReply(`Finished playing: "${text}" with voice ${voiceName}`);
+            // Add the song to the queue
+            serverQueue.voiceRecords.push({
+                text,
+                voiceName,
+                voiceChannel,
+                guildId: interaction.guild.id,
+                interaction
             });
+
+            // Update the user about their position in the queue
+            const position = serverQueue.voiceRecords.length;
+            if (position === 1) {
+                await interaction.editReply(`Your request is being processed now!`);
+            } else {
+                await interaction.editReply(`Your request has been added to the queue. Position: ${position}`);
+            }
+
+            // Start processing the queue if not already playing
+            if (!serverQueue.playing) {
+                processQueue(interaction.guild.id);
+            }
             
         } catch (error) {
-            // Log error and notify user if something goes wrong
-            console.error('Error generating voice:', error);
-            await interaction.editReply('There was an error generating the voice.');
+            console.error('Error in say command:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ 
+                    content: 'There was an error executing this command!', 
+                    ephemeral: true 
+                });
+            } else {
+                await interaction.editReply('There was an error executing this command!');
+            }
         }
     },
 }; 

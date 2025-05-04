@@ -5,7 +5,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Create a new Discord client with required intents
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
+const client = new Client({ 
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+    ] 
+});
 
 // Create a collection to store commands
 client.commands = new Collection();
