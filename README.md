@@ -22,7 +22,7 @@ A Discord bot that converts text to speech using ElevenLabs AI voice synthesis. 
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/yourusername/TalkLikeAI.git
+git clone https://github.com/VagosTurbo/TalkLikeAI.git
 cd TalkLikeAI
 ```
 
@@ -61,7 +61,7 @@ node src/index.js
 1. Invite the bot to your Discord server using the OAuth2 URL generated in the Discord Developer Portal
 2. Use the `/say` command in any channel:
    ```
-   /say text: Hello, this is an AI voice! voice: Rachel
+   /say text: Hello, this is an AI voice! voice: Rytmus
    ```
 3. The bot will join your voice channel and play the generated audio
 
@@ -78,12 +78,12 @@ Converts text to speech using ElevenLabs AI.
 
 **Available Voices:**
 
-- Rachel
-- Domi
-- Bella
-- Antoni
-- Elli
-- Josh
+- Robert Fico
+- Rytmus
+- Separ
+- Rachellka
+- Restt
+- Boborovský
 - Arnold
 - Adam
 - Sam
@@ -99,32 +99,6 @@ Converts text to speech using ElevenLabs AI.
 - Paul
 - Arthur
 - Kyle
-
-## Configuration
-
-You can modify the following settings in the code:
-
-- Voice model and settings in `src/utils/elevenlabs.js`
-- Command configurations in `src/commands/say.js`
-- Bot settings in `src/config.js`
-
-## Troubleshooting
-
-If you encounter any issues:
-
-1. Check that your Discord bot token and ElevenLabs API key are correct
-2. Ensure the bot has the necessary permissions in your Discord server
-3. Verify that the slash commands are properly registered
-4. Check the console for any error messages
-5. Make sure you're in a voice channel when using the `/say` command
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
